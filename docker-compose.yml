@@ -1,0 +1,50 @@
+networks:
+  service.net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+
+services:
+  productservice.api:
+    container_name: catalog.service.api
+    ports:
+        - "5010:8080"
+        - "5011:8081"
+    image: ${DOCKER_REGISTRY-}productserviceapi
+    build:
+      context: .
+      dockerfile: ProductService.API/Dockerfile
+    networks:
+        - service.net
+    depends_on:
+        - db.server
+        - redis.server
+
+  db.server:
+    container_name: db.server
+    ports:
+        - "6101:5432"
+    environment:
+        - POSTGRES_PASSWORD=1234
+        - POSTGRES_USER=admin
+    image: postgres:16.3-alpine
+    networks:
+        - service.net
+    volumes:
+        - postgres-data:/var/lib/postgresql/data
+
+  redis.server:
+    image: redis:7.4.2
+    container_name: redis.server
+    ports:
+        - "6380:6379"
+    environment:
+        - REDIS_PASSWORD=1234
+        - REDIS_USER=admin
+        - REDIS_USER_PASSWORD=1234
+    networks:
+        - service.net
+    volumes:
+        - redis-data:/var/lib/redis/data
